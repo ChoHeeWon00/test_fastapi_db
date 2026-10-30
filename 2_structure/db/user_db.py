@@ -51,13 +51,35 @@ users : list[User] = [
     User(username="bbb", password="bbb", email="bbb@bbb.bbb", name="김개똥"),
 ]
 '''
-async def update( username:str, user:User):
+from schemas.user_update_schemas import UserUpdate
+async def update( username:str, user:UserUpdate, db:Session):
+    user_table =  ( db.query(user_model.User)
+                    .filter( user_model.User.username == username )
+                    .first() )
+    if user_table is None:
+        return None
+    
+    #user_table.email = user.email
+    #user_table.name = user.name
+
+    user_dict = user.model_dump( exclude_unset = True )
+    print("user_dict : ", user_dict )
+    #{email:aaa@aaa.aaa, name:홍길동}
+    for k, v in user_dict.items():
+        setattr(user_table, k, v)
+
+    db.commit()
+    db.refresh(user_table)
+    return User.model_validate( user_table )
+
+    '''
     for i, u in enumerate(users):
         if u.username == username:
             users[i] = user
             #u = user
             return u
-    return None
+    '''
+    
 
 async def delete( username:str ):
     for i, u in enumerate(users):
@@ -65,4 +87,9 @@ async def delete( username:str ):
             del_user = users.pop( i )
             return del_user
     return None
-    
+
+async def db_get_one(id:int, db:Session) -> User | None:
+    userTable = db.get(user_model.User, id)
+    if not userTable:
+        return None
+    return User.model_validate( userTable )

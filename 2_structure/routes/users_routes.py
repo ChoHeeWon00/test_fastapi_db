@@ -65,13 +65,24 @@ async def post_user(user : User, db : Session = Depends(get_db) ) -> User:
         )
     return result
 
+from schemas.user_update_schemas import UserUpdate
+from fastapi import Form
+
+@user_router.put("/form/{username}")
+async def update_user( 
+        username:str , user:UserUpdate=Form(...), db:Session=Depends(get_db) ):
+    result = await user_db.update(username, user, db)
+    if result:
+        return result
+    raise HTTPException(
+                status_code=404, 
+                detail="수정 사용자 id 없음!!!"
+        )
+
 @user_router.put("/{username}")
-async def update_user( username:str , user:User):
-    #print( "라우터 연결" )
-    #print( username )
-    #print( user )
-    
-    result = await user_db.update(username, user)
+async def update_user( 
+        username:str , user:UserUpdate, db:Session=Depends(get_db) ):
+    result = await user_db.update(username, user, db)
     if result:
         return result
     raise HTTPException(
@@ -90,3 +101,12 @@ async def delete_user(username : str) -> User:
             detail="user not found"
         )
 
+from db.user_db import db_get_one
+
+@user_router.get("/one/{id}")
+async def get_user_one(id:int, db:Session = Depends(get_db)):
+    result = await db_get_one(id, db)
+    if result:
+        return result
+    raise HTTPException(
+        status_code=404, detail="존재하지 않는 사용자")
