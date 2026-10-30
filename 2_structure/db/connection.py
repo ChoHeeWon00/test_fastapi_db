@@ -8,3 +8,14 @@ engine = create_engine(DATABASE_URL, echo=True)
 
 class Base(DeclarativeBase):
     pass
+
+SessionLocal = sessionmaker( autoflush=False, bind=engine )
+
+def get_db():
+    print("db 연결 시작")
+    db = SessionLocal()
+    try:
+        yield db #"DB연결객체"
+    finally:
+        db.close()
+        print("db 종료")

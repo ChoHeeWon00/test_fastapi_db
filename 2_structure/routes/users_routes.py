@@ -3,16 +3,35 @@ from fastapi import APIRouter, HTTPException, status
 from schemas.user_schemas import User
 from db import user_db
 
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from db.connection import get_db
+import time
+
 user_router = APIRouter(tags=["User"])
+
+@user_router.get("/test2")
+async def test2(db : Session = Depends( get_db ) ) -> dict:
+    print("db : ", db)
+    time.sleep(3)
+    return {"msg":"test"}
 
 @user_router.get("/test")
 async def test() -> dict:
+    db = get_db()
+    print("db : ", db)
+    print("db next : ", next(db) )
+    time.sleep(3)
     return {"msg":"test"}
 
 @user_router.get("/")
-async def get_users() -> list[User] :
-    users = await user_db.get_users()
-    print( users )
+async def get_users( db : Session = Depends(get_db) ) -> list[User] | None :
+    users = await user_db.get_users( db )
+    #print( users )
+    if not users:
+        raise HTTPException(
+            status_code=404, detail="데이터가 없습니다"
+            )
     return users
 
 @user_router.get("/{email}",
@@ -36,9 +55,9 @@ async def get_user(email : str) :
                   summary="회원가입입니다",
                   responses={ 409:{"description":"중복id"} }
                   )
-async def post_user(user : User) -> User:
+async def post_user(user : User, db : Session = Depends(get_db) ) -> User:
     #print("사용자 추가 router : ", user)
-    result = await user_db.insert( user )
+    result = await user_db.insert( user, db )
     if not result: #None 거짓
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
