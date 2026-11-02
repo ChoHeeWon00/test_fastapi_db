@@ -21,13 +21,26 @@ async def get_users( db : Session) -> list[User]:
     '''
     return users
 
-async def get_user(email : str) -> User | None:
+async def get_user(email : str, db : Session) -> User | None:
+    exist_user =  ( 
+                        db.query(user_model.User)
+                        .filter( user_model.User.email == email )
+                        .first()
+                      )
+    print(" get user : ", exist_user)
+    if exist_user is None:
+            return None
+    userTable = User.model_validate( exist_user )
+    #userTable = User( **exist_user.model_dump() )
+    return userTable
+    '''
     print("email 데이터베이스 연결 : ",email)
     for u in users:
         print( u )
         if u.email == email:
             return u
     return None
+    '''
 
 async def insert( user : User , db : Session) -> User | None:
     exist_user =  ( 
@@ -81,12 +94,23 @@ async def update( username:str, user:UserUpdate, db:Session):
     '''
     
 
-async def delete( username:str ):
+async def delete( username:str , db:Session):
+    user_table =  ( db.query(user_model.User)
+                        .filter( user_model.User.username == username )
+                        .first() )
+    if user_table is None:
+            return None
+    db.delete( user_table )
+    db.commit()
+    return User.model_validate( user_table )
+    
+    '''
     for i, u in enumerate(users):
         if u.username == username:
             del_user = users.pop( i )
             return del_user
     return None
+    '''
 
 async def db_get_one(id:int, db:Session) -> User | None:
     userTable = db.get(user_model.User, id)

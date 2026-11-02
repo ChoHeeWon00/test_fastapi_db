@@ -38,9 +38,9 @@ async def get_users( db : Session = Depends(get_db) ) -> list[User] | None :
                   response_model=User,
                   status_code=201
                   )
-async def get_user(email : str) :
+async def get_user(email : str,  db : Session = Depends(get_db)) :
     print("email route 연결 : ", email)
-    user = await user_db.get_user( email )
+    user = await user_db.get_user( email, db )
     print( user )
     if user:
         return user
@@ -68,7 +68,7 @@ async def post_user(user : User, db : Session = Depends(get_db) ) -> User:
 from schemas.user_update_schemas import UserUpdate
 from fastapi import Form
 
-@user_router.put("/form/{username}")
+@user_router.put("/form/{username}") # users/form/{사용자id}
 async def update_user( 
         username:str , user:UserUpdate=Form(...), db:Session=Depends(get_db) ):
     result = await user_db.update(username, user, db)
@@ -92,8 +92,8 @@ async def update_user(
     #return None
 
 @user_router.delete("/{username}")
-async def delete_user(username : str) -> User:
-    result = await user_db.delete( username )
+async def delete_user(username : str, db:Session = Depends(get_db)) -> User:
+    result = await user_db.delete( username, db )
     if result:
         return result
     raise HTTPException(
