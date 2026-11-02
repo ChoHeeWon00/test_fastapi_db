@@ -67,7 +67,7 @@ async def update( username:str, user:UserUpdate, db:Session):
     #{email:aaa@aaa.aaa, name:홍길동}
     for k, v in user_dict.items():
         setattr(user_table, k, v)
-
+   
     db.commit()
     db.refresh(user_table)
     return User.model_validate( user_table )
