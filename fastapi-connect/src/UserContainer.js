@@ -129,7 +129,6 @@ function MainCon(){
         })
         console.log("res : ", res)
     }
-
     return <>
 
         <form onSubmit={onUpdateSubmit} >
